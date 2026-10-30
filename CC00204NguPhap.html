@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BÀI 4 – NGỮ PHÁP - Flashcard</title>
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0; min-height:100vh; font-family:Arial,"Microsoft YaHei",sans-serif;
+  background:#fdfbf7;
+  display:flex; justify-content:center; color:#202124;
+}
+.app{width:min(860px,96vw); padding:30px 0 40px}
+h1{text-align:center;margin:0 0 15px;font-size:38.4px; font-weight: bold;}
+.progress{text-align:center;font-size:21.6px;color:#444;margin-bottom:20px; font-weight: bold;}
+.card-wrap{perspective:1200px; cursor:pointer}
+.card{
+  width:100%; height:640px; position:relative; transform-style:preserve-3d;
+  transition:transform .55s ease;
+}
+.card.flipped{transform:rotateY(180deg)}
+.face{
+  position:absolute; inset:0; backface-visibility:hidden; -webkit-backface-visibility:hidden;
+  border-radius:24px; background:white; box-shadow:0 15px 45px rgba(0,0,0,.15);
+  display:flex; flex-direction:column; padding:36px; border:3px solid #eee; overflow-y:auto;
+}
+.front{justify-content:flex-start; align-items:flex-start; text-align:left}
+.back{transform:rotateY(180deg); text-align:left; align-items:flex-start; justify-content:flex-start; padding-top:40px;}
+
+.hl{color: #7c2d12; font-weight: bold; background-color: #fef08a; padding: 2px 6px; border-radius: 4px; border: 1px solid #eab308;}
+.hl-blue { color: #ffffff; font-weight: bold; background-color: #2563eb; padding: 2px 6px; border-radius: 4px; }
+.hl-red { color: #dc2626; font-weight: bold; }
+
+.pinyin{
+  font-size:1.68em;
+  color:#666666;
+  margin-bottom:10px;
+  font-weight:bold;
+  text-align:center;
+  width:100%;
+}
+
+.zh-front { font-size: 2.16em; font-weight: bold; margin-bottom: 2px; line-height: 1.3; color: #dc2626; text-align: center; width: 100%; }
+
+.zh-back { color: #2563eb; font-weight: bold; font-size: 1.35em; line-height: 1.3; display: inline-block; margin-top: 10px; margin-bottom: 2px; }
+.pinyin-back { color: #666666; font-weight: bold; font-size: 1.15em; display: block; margin: 2px 0; }
+.vi-back { font-size: 1.15em; color: #333; display: block; margin-bottom: 12px; }
+
+.desc-front { font-size: 1.45em; color: #333; margin: 8px 0; text-align: left; width: 100%; line-height: 1.4; }
+.desc { font-size: 1.45em; color: #333; margin: 0; text-align: left; width: 100%; line-height: 1.4; }
+
+.controls{display:flex;gap:20px;justify-content:center;margin-top:30px}
+button{
+  border:0;border-radius:20px;padding:20px 35px;font-size:26.4px;
+  cursor:pointer;background:#e9eef7;color:#233044; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,.1);
+}
+button.primary{background:#2563eb;color:white}
+</style>
+</head>
+
+<body>
+<div class="app">
+  <h1 id="title">BÀI 4 – NGỮ PHÁP</h1>
+  <div class="progress" id="progress"></div>
+
+  <div class="card-wrap" id="cardWrap" onclick="flipCard()">
+    <div class="card" id="card">
+      <div class="face front" id="frontFace"></div>
+      <div class="face back" id="backFace"></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button onclick="event.stopPropagation();prevCard()">← TRƯỚC</button>
+    <button class="primary" onclick="event.stopPropagation();flipCard()">LẬT THẺ</button>
+    <button onclick="event.stopPropagation();nextCard()">TIẾP →</button>
+  </div>
+</div>
+
+<script>
+const cards = [
+  {
+    f: "<div class='zh-front'>NGOÀI RA… CÒN…</div>" +
+       "<div class='zh-front'>除了...，還 / 也</div>" +
+       "<div class='pinyin'>chúle..., hái / yě</div>" +
+       "<div class='desc-front'>" +
+       "Cấu trúc dùng để liệt kê, bổ sung thêm thông tin.<br><br>" +
+       "Khi muốn phủ định (không cái này, cũng không cái kia), thì đặt 不/沒 trước động từ thứ hai (sau chữ 還).<br><br>" +
+       "Khi đặt câu hỏi, có thể dùng 嗎 ở cuối câu hoặc dùng câu hỏi lựa chọn." +
+       "</div>",
+    b: "<div class='desc' style='line-height:1.4;'>" +
+       "<span class='zh-back'>放假的時候，馬安同除了常打籃球，還常踢足球。</span><br><span class='pinyin-back'>Fàngjià de shíhou, Mǎ Āntóng chúle cháng dǎ lánqiú, hái cháng tī zúqiú.</span><span class='vi-back'>(Vào ngày nghỉ, Mã An Đồng ngoài việc thường xuyên chơi bóng rổ, còn thường xuyên đá bóng.)</span>" +
+       "<span class='zh-back'>台灣好吃的小吃，除了牛肉麵，還有小籠包。</span><br><span class='pinyin-back'>Táiwān hǎochī de xiǎochī, chúle niúròumiàn, hái yǒu xiǎolóngbāo.</span><span class='vi-back'>(Các món ăn vặt ngon của Đài Loan, ngoài mì bò ra, còn có bánh bao nhỏ.)</span>" +
+       "<span class='zh-back'>從學校到火車站，除了坐捷運，還可以坐公車。</span><br><span class='pinyin-back'>Cóng xuéxiào dào huǒchēzhàn, chúle zuò jiéyùn, hái kěyǐ zuò gōngchē.</span><span class='vi-back'>(Từ trường đến ga tàu, ngoài đi tàu điện ngầm ra, còn có thể đi xe buýt.)</span>" +
+       "<span class='zh-back'>感冒的人除了要吃藥，也要多喝水、多休息。</span><br><span class='pinyin-back'>Gǎnmào de rén chúle yào chī yào, yě yào duō hē shuǐ, duō xiūxi.</span><span class='vi-back'>(Người bị cảm ngoài việc uống thuốc ra, cũng cần uống nhiều nước và nghỉ ngơi nhiều.)</span>" +
+       "<span class='zh-back'>白如玉除了不喜歡喝茶，她還不喜歡喝咖啡。</span><br><span class='pinyin-back'>Bái Rúyù chúle bù xǐhuan hē chá, tā hái bù xǐhuan hē kāfēi.</span><span class='vi-back'>(Bạch Như Ngọc ngoài việc không thích uống trà, cô ấy còn không thích uống cà phê nữa.)</span>" +
+       "<span class='zh-back'>馬安同生病了，他除了沒寫作業，還沒準備考試。</span><br><span class='pinyin-back'>Mǎ Āntóng shēngbìng le, tā chúle méi xiě zuòyè, hái méi zhǔnbèi kǎoshì.</span><span class='vi-back'>(Mã An Đồng bị ốm rồi, cậu ấy ngoài việc không viết bài tập, còn chưa chuẩn bị cho kỳ thi.)</span>" +
+       "<span class='zh-back'>你們除了去故宮，還去了哪些地方？</span><br><span class='pinyin-back'>Nǐmen chúle qù Gùgōng, hái qù le nǎxiē dìfang?</span><span class='vi-back'>(Ngoài đi Cố Cung, các bạn còn đi những đâu nữa?)</span>" +
+       "<span class='zh-back'>我們除了點牛肉麵，還要點臭豆腐嗎？</span><br><span class='pinyin-back'>Wǒmen chúle diǎn niúròumiàn, hái yào diǎn chòudòufǔ ma?</span><span class='vi-back'>(Chúng ta ngoài gọi mì bò ra, còn gọi đậu phụ thối nữa không?)</span>" +
+       "<span class='zh-back'>除了芒果，他是不是還喜歡吃西瓜？</span><br><span class='pinyin-back'>Chúle mángguǒ, tā shì bú shì hái xǐhuan chī xīguā?</span><span class='vi-back'>(Ngoài xoài ra, cậu ấy có phải còn thích ăn dưa hấu không?)</span>" +
+       "<span class='zh-back'>A: 除了西班牙，你還去過哪些國家？</span><br><span class='pinyin-back'>A: Chúle Xībānyá, nǐ hái qù guò nǎxiē guójiā?</span><span class='vi-back'>(Ngoài Tây Ban Nha, cậu còn đi qua những nước nào nữa?)</span>" +
+       "<span class='zh-back'>B: 除了西班牙，我還去過日本。</span><br><span class='pinyin-back'>B: Chúle Xībānyá, wǒ hái qù guò Rìběn.</span><span class='vi-back'>(Ngoài Tây Ban Nha, tớ còn đi qua Nhật Bản rồi.)</span>" +
+       "<span class='zh-back'>A: 除了學中文，你還想學什麼？</span><br><span class='pinyin-back'>A: Chúle xué zhōngwén, nǐ hái xiǎng xué shénme?</span><span class='vi-back'>(Ngoài học tiếng Trung, cậu còn muốn học gì nữa?)</span>" +
+       "<span class='zh-back'>B: 除了學中文，我還想學英文。</span><br><span class='pinyin-back'>B: Chúle xué zhōngwén, wǒ hái xiǎng xué Yīngwén.</span><span class='vi-back'>(Ngoài học tiếng Trung, tớ còn muốn học tiếng Anh.)</span>" +
+       "<span class='zh-back'>A: 你除了喉嚨痛，還有哪裡不舒服？</span><br><span class='pinyin-back'>A: Nǐ chúle hóulóng tòng, hái yǒu nǎlǐ bù shūfu?</span><span class='vi-back'>(Cậu ngoài đau họng ra, còn chỗ nào khó chịu nữa không?)</span>" +
+       "<span class='zh-back'>B: 我除了喉嚨痛，還有發燒。</span><br><span class='pinyin-back'>B: Wǒ chúle hóulóng tòng, hái yǒu fāshāo.</span><span class='vi-back'>(Tớ ngoài đau họng ra, còn bị sốt nữa.)</span>" +
+       "<span class='zh-back'>A: 你除了不喜歡吃臭豆腐，還不喜歡吃什麼？</span><br><span class='pinyin-back'>A: Nǐ chúle bù xǐhuan chī chòudòufǔ, hái bù xǐhuan chī shénme?</span><span class='vi-back'>(Cậu ngoài không thích ăn đậu phụ thối, còn không thích ăn gì nữa?)</span>" +
+       "<span class='zh-back'>B: 我除了不喜歡吃臭豆腐，還不喜歡吃豬腳麵線。</span><br><span class='pinyin-back'>B: Wǒ chúle bù xǐhuan chī chòudòufǔ, hái bù xǐhuan chī zhūjiǎo miànxiàn.</span><span class='vi-back'>(Tớ ngoài không thích ăn đậu phụ thối, còn không thích ăn mì móng giò nữa.)</span>" +
+       "</div>"
+  },
+  {
+    f: "<div class='zh-front'>DỰA THEO… THEO…</div>" +
+       "<div class='zh-front'>按照...</div>" +
+       "<div class='pinyin'>ànzhào...</div>" +
+       "<div class='desc-front'>" +
+       "按照 dùng để nói về căn cứ, tiêu chuẩn, quy định hoặc kế hoạch. Nó có thể đứng ở đầu câu hoặc đứng ngay trước động từ.<br><br>" +
+       "Khi phủ định, thêm 不/沒 ngay trước chữ 按照.<br><br>" +
+       "Khi đặt câu hỏi, thường dùng 是不是 đặt trước chữ 按照." +
+       "</div>",
+    b: "<div class='desc' style='line-height:1.4;'>" +
+       "<span class='zh-back'>按照醫生說的，你睡覺以前要吃一包藥。</span><br><span class='pinyin-back'>Ànzhào yīshēng shuō de, nǐ shuìjiào yǐqián yào chī yì bāo yào.</span><span class='vi-back'>(Theo lời bác sĩ nói, trước khi đi ngủ cậu phải uống một gói thuốc.)</span>" +
+       "<span class='zh-back'>我打算按照網路的介紹，自己去花蓮玩玩。</span><br><span class='pinyin-back'>Wǒ dǎsuàn ànzhào wǎnglù de jièshào, zìjǐ qù Huālián wánwan.</span><span class='vi-back'>(Tớ định dựa theo giới thiệu trên mạng, tự mình đi Hoa Liên chơi.)</span>" +
+       "<span class='zh-back'>你應該按照老師的建議，練習寫中國字。</span><br><span class='pinyin-back'>Nǐ yīnggāi ànzhào lǎoshī de jiànyì, liànxí xiě Zhōngguózì.</span><span class='vi-back'>(Cậu nên dựa theo lời khuyên của giáo viên, luyện viết chữ Hán.)</span>" +
+       "<span class='zh-back'>馬安同沒按照老師的建議準備考試。</span><br><span class='pinyin-back'>Mǎ Āntóng méi ànzhào lǎoshī de jiànyì zhǔnbèi kǎoshì.</span><span class='vi-back'>(Mã An Đồng đã không làm theo lời khuyên của giáo viên để chuẩn bị cho kỳ thi.)</span>" +
+       "<span class='zh-back'>田中誠一常常不按照老闆說的做事。</span><br><span class='pinyin-back'>Tiánzhōng Chéngyī chángcháng bù ànzhào lǎobǎn shuō de zuòshì.</span><span class='vi-back'>(Điền Trung Thành Nhất thường xuyên không làm việc theo lời ông chủ nói.)</span>" +
+       "<span class='zh-back'>高美玲沒按照計畫回來工作，她的老闆很不高興。</span><br><span class='pinyin-back'>Gāo Měilíng méi ànzhào jìhuà huílái gōngzuò, tā de lǎobǎn hěn bù gāoxìng.</span><span class='vi-back'>(Cao Mỹ Linh đã không trở lại làm việc theo kế hoạch, ông chủ của cô ấy rất không vui.)</span>" +
+       "<span class='zh-back'>你是不是按照老師給你的建議練習說話？</span><br><span class='pinyin-back'>Nǐ shì bú shì ànzhào lǎoshī gěi nǐ de jiànyì liànxí shuōhuà?</span><span class='vi-back'>(Cậu có phải đã làm theo lời khuyên giáo viên đưa để luyện nói không?)</span>" +
+       "<span class='zh-back'>你是不是按照網路上的說明做小籠包？</span><br><span class='pinyin-back'>Nǐ shì bú shì ànzhào wǎnglù shàng de shuōmíng zuò xiǎolóngbāo?</span><span class='vi-back'>(Cậu có phải đã làm bánh bao tiểu long theo hướng dẫn trên mạng không?)</span>" +
+       "<span class='zh-back'>請你按照我們約的時間在捷運站跟我見面，好嗎？</span><br><span class='pinyin-back'>Qǐng nǐ ànzhào wǒmen yuē de shíjiān zài jiéyùnzhàn gēn wǒ jiànmiàn, hǎo ma?</span><span class='vi-back'>(Cậu hãy gặp tớ ở ga tàu điện ngầm theo thời gian chúng ta đã hẹn, được không?)</span>" +
+       "<span class='zh-back'>A: 按照你們國家的法律，幾歲可以騎機車？</span><br><span class='pinyin-back'>A: Ànzhào nǐmen guójiā de fǎlǜ, jǐ suì kěyǐ qí jīchē?</span><span class='vi-back'>(Theo pháp luật nước cậu, mấy tuổi thì được đi xe máy?)</span>" +
+       "<span class='zh-back'>B: 按照我們國家的法律，十八歲可以騎機車。</span><br><span class='pinyin-back'>B: Ànzhào wǒmen guójiā de fǎlǜ, shíbā suì kěyǐ qí jīchē.</span><span class='vi-back'>(Theo pháp luật nước tớ, mười tám tuổi thì được đi xe máy.)</span>" +
+       "<span class='zh-back'>A: 按照你的成績，你能不能拿語言中心的獎學金？</span><br><span class='pinyin-back'>A: Ànzhào nǐ de chéngjī, nǐ néng bù néng ná yǔyán zhōngxīn de jiǎngxuéjīn?</span><span class='vi-back'>(Dựa theo thành tích của cậu, cậu có thể lấy được học bổng của trung tâm ngôn ngữ không?)</span>" +
+       "<span class='zh-back'>B: 按照我的成績，我不能拿語言中心的獎學金。</span><br><span class='pinyin-back'>B: Ànzhào wǒ de chéngjī, wǒ bù néng ná yǔyán zhōngxīn de jiǎngxuéjīn.</span><span class='vi-back'>(Dựa theo thành tích của tớ, tớ không thể lấy được học bổng của trung tâm ngôn ngữ.)</span>" +
+       "<span class='zh-back'>A: 按照你自己的計畫，你打算一個星期上幾個小時的中文課？</span><br><span class='pinyin-back'>A: Ànzhào nǐ zìjǐ de jìhuà, nǐ dǎsuàn yí gè xīngqī shàng jǐ gè xiǎoshí de zhōngwén kè?</span><span class='vi-back'>(Dựa theo kế hoạch của bản thân, cậu định học bao nhiêu giờ tiếng Trung một tuần?)</span>" +
+       "<span class='zh-back'>B: 按照我自己的計畫，我打算一個星期上十個小時的中文課。</span><br><span class='pinyin-back'>B: Ànzhào wǒ zìjǐ de jìhuà, wǒ dǎsuàn yí gè xīngqī shàng shí gè xiǎoshí de zhōngwén kè.</span><span class='vi-back'>(Dựa theo kế hoạch của bản thân, tớ định học mười giờ tiếng Trung một tuần.)</span>" +
+       "<span class='zh-back'>A: 按照你們國家的傳統，你們怎麼過生日？</span><br><span class='pinyin-back'>A: Ànzhào nǐmen guójiā de chuántǒng, nǐmen zěnme guò shēngrì?</span><span class='vi-back'>(Theo truyền thống nước cậu, các cậu đón sinh nhật như thế nào?)</span>" +
+       "<span class='zh-back'>B: 按照我們國家的傳統，我們過生日的時候吃蛋糕。</span><br><span class='pinyin-back'>B: Ànzhào wǒmen guójiā de chuántǒng, wǒmen guò shēngrì de shíhou chī dàngāo.</span><span class='vi-back'>(Theo truyền thống nước tớ, khi đón sinh nhật chúng tớ ăn bánh kem.)</span>" +
+       "<span class='zh-back'>A: 按照醫生的說明，每天早上幾點起來，晚上幾點睡覺比較健康？</span><br><span class='pinyin-back'>A: Ànzhào yīshēng de shuōmíng, měi tiān zǎoshang jǐ diǎn qǐlái, wǎnshang jǐ diǎn shuìjiào bǐjiào jiànkāng?</span><span class='vi-back'>(Theo lời giải thích của bác sĩ, mỗi sáng mấy giờ dậy, tối mấy giờ ngủ thì tương đối khỏe mạnh?)</span>" +
+       "<span class='zh-back'>B: 按照醫生的說明，早睡早起比較健康。</span><br><span class='pinyin-back'>B: Ànzhào yīshēng de shuōmíng, zǎoshuì zǎoqǐ bǐjiào jiànkāng.</span><span class='vi-back'>(Theo lời giải thích của bác sĩ, ngủ sớm dậy sớm thì tương đối khỏe mạnh.)</span>" +
+       "<span class='zh-back'>A: 按照你們國家的習慣，吃飯的時候，先吃飯還是先喝湯？</span><br><span class='pinyin-back'>A: Ànzhào nǐmen guójiā de xíguàn, chī fàn de shíhou, xiān chī fàn hái shì xiān hē tāng?</span><span class='vi-back'>(Theo thói quen nước cậu, khi ăn cơm, ăn cơm trước hay uống canh trước?)</span>" +
+       "<span class='zh-back'>B: 按照我們國家的習慣，吃飯的時候先喝湯。</span><br><span class='pinyin-back'>B: Ànzhào wǒmen guójiā de xíguàn, chī fàn de shíhou xiān hē tāng.</span><span class='vi-back'>(Theo thói quen nước tớ, khi ăn cơm thì uống canh trước.)</span>" +
+       "</div>"
+  },
+  {
+    f: "<div class='zh-front'>CÁC NGHĨA CỦA GIỚI TỪ</div>" +
+       "<div class='zh-front'>跟</div>" +
+       "<div class='pinyin'>gēn</div>" +
+       "<div class='desc-front'>" +
+       "Chữ 跟 rất đa dạng. Nó có thể mang nghĩa \"với\", \"cùng/với\", hoặc \"từ/học từ\".<br><br>" +
+       "Khi phủ định (thêm 不/沒) trước 跟.<br><br>" +
+       "Khi đặt câu hỏi (dạng A不A, chính phản), đặt ngay trước chữ 跟." +
+       "</div>",
+    b: "<div class='desc' style='line-height:1.4;'>" +
+       "<span class='zh-back'>老師跟學生說，明天要考試。</span><br><span class='pinyin-back'>Lǎoshī gēn xuésheng shuō, míngtiān yào kǎoshì.</span><span class='vi-back'>(Giáo viên nói với học sinh rằng ngày mai sẽ thi.)</span>" +
+       "<span class='zh-back'>他剛跟田中說明了他們國家的文化。</span><br><span class='pinyin-back'>Tā gāng gēn Tiánzhōng shuōmíng le tāmen guójiā de wénhuà.</span><span class='vi-back'>(Anh ấy vừa mới giải thích văn hóa nước họ cho Điền Trung.)</span>" +
+       "<span class='zh-back'>語言中心主任跟高美玲介紹工作環境。</span><br><span class='pinyin-back'>Yǔyán zhōngxīn zhǔrèn gēn Gāo Měilíng jièshào gōngzuò huánjìng.</span><span class='vi-back'>(Chủ nhiệm trung tâm ngôn ngữ giới thiệu môi trường làm việc với Cao Mỹ Linh.)</span>" +
+       "<span class='zh-back'>田中誠一昨天跟馬安同一起踢足球。</span><br><span class='pinyin-back'>Tiánzhōng Chéngyī zuótiān gēn Mǎ Āntóng yìqǐ tī zúqiú.</span><span class='vi-back'>(Điền Trung Thành Nhất hôm qua đã cùng Mã An Đồng đá bóng.)</span>" +
+       "<span class='zh-back'>我是跟朋友一起來的。</span><br><span class='pinyin-back'>Wǒ shì gēn péngyǒu yìqǐ lái de.</span><span class='vi-back'>(Tớ là đến cùng với bạn.)</span>" +
+       "<span class='zh-back'>這個週末，我想跟朋友去台南玩。</span><br><span class='pinyin-back'>Zhè gè zhōumò, wǒ xiǎng gēn péngyǒu qù Táinán wán.</span><span class='vi-back'>(Cuối tuần này, tớ muốn cùng bạn đi Đài Nam chơi.)</span>" +
+       "<span class='zh-back'>馬安同想跟王老師學寫書法。</span><br><span class='pinyin-back'>Mǎ Āntóng xiǎng gēn Wáng lǎoshī xué xiě shūfǎ.</span><span class='vi-back'>(Mã An Đồng muốn học viết thư pháp từ thầy Vương.)</span>" +
+       "<span class='zh-back'>他打算跟麵包店老闆學做麵包。</span><br><span class='pinyin-back'>Tā dǎsuàn gēn miànbāodiàn lǎobǎn xué zuò miànbāo.</span><span class='vi-back'>(Cậu ấy định học làm bánh mì từ ông chủ tiệm bánh.)</span>" +
+       "<span class='zh-back'>我想跟朋友買他的那支舊手機。</span><br><span class='pinyin-back'>Wǒ xiǎng gēn péngyǒu mǎi tā de nà zhī jiù shǒujī.</span><span class='vi-back'>(Tớ muốn mua chiếc điện thoại cũ đó từ bạn tớ.)</span>" +
+       "<span class='zh-back'>請你不要跟別人說你和我的薪水。</span><br><span class='pinyin-back'>Qǐng nǐ bú yào gēn biérén shuō nǐ hé wǒ de xīnshuǐ.</span><span class='vi-back'>(Cậu đừng nói với người khác tiền lương của cậu và tớ nhé.)</span>" +
+       "<span class='zh-back'>馬安同沒跟台灣朋友去看電腦展。</span><br><span class='pinyin-back'>Mǎ Āntóng méi gēn Táiwān péngyǒu qù kàn diànnǎozhǎn.</span><span class='vi-back'>(Mã An Đồng đã không cùng bạn Đài Loan đi xem triển lãm máy tính.)</span>" +
+       "<span class='zh-back'>田中誠一不是跟王老師學西班牙文，是跟馬安同學的。</span><br><span class='pinyin-back'>Tiánzhōng Chéngyī bú shì gēn Wáng lǎoshī xué Xībānyáwén, shì gēn Mǎ Āntóng xué de.</span><span class='vi-back'>(Điền Trung Thành Nhất không phải học tiếng Tây Ban Nha từ thầy Vương, mà là học từ Mã An Đồng.)</span>" +
+       "<span class='zh-back'>你是不是跟李教授學書法？</span><br><span class='pinyin-back'>Nǐ shì bú shì gēn Lǐ jiàoshòu xué shūfǎ?</span><span class='vi-back'>(Cậu có phải học thư pháp từ giáo sư Lý không?)</span>" +
+       "<span class='zh-back'>你跟大家好好介紹辦公室的環境了沒有？</span><br><span class='pinyin-back'>Nǐ gēn dàjiā hǎohāo jièshào bàngōngshì de huánjìng le méiyǒu?</span><span class='vi-back'>(Cậu đã giới thiệu môi trường văn phòng với mọi người chưa?)</span>" +
+       "<span class='zh-back'>下個星期，你跟不跟我去爬山？</span><br><span class='pinyin-back'>Xià gè xīngqī, nǐ gēn bù gēn wǒ qù páshān?</span><span class='vi-back'>(Tuần sau, cậu có đi leo núi cùng tớ không?)</span>" +
+       "<span class='zh-back'>田中誠一跟高美玲學騎機車。</span><br><span class='pinyin-back'>Tiánzhōng Chéngyī gēn Gāo Měilíng xué qí jīchē.</span><span class='vi-back'>(Điền Trung Thành Nhất học đi xe máy từ Cao Mỹ Linh.)</span>" +
+       "<span class='zh-back'>李明華要跟高美玲買她的舊手機。</span><br><span class='pinyin-back'>Lǐ Mínghuá yào gēn Gāo Měilíng mǎi tā de jiù shǒujī.</span><span class='vi-back'>(Lý Minh Hoa muốn mua chiếc điện thoại cũ từ Cao Mỹ Linh.)</span>" +
+       "<span class='zh-back'>陳月美想跟高美玲學做法國蛋糕。</span><br><span class='pinyin-back'>Chén Yuèměi xiǎng gēn Gāo Měilíng xué zuò Fǎguó dàngāo.</span><span class='vi-back'>(Trần Nguyệt Mỹ muốn học làm bánh ngọt Pháp từ Cao Mỹ Linh.)</span>" +
+       "<span class='zh-back'>馬安同跟高美玲說這個工作很適合她。</span><br><span class='pinyin-back'>Mǎ Āntóng gēn Gāo Měilíng shuō zhè gè gōngzuò hěn shìhé tā.</span><span class='vi-back'>(Mã An Đồng nói với Cao Mỹ Linh rằng công việc này rất phù hợp với cô ấy.)</span>" +
+       "<span class='zh-back'>王開文打算跟高美玲請教在法國工作的事。</span><br><span class='pinyin-back'>Wáng Kāiwén dǎsuàn gēn Gāo Měilíng qǐngjiào zài Fǎguó gōngzuò de shì.</span><span class='vi-back'>(Vương Khai Văn định hỏi Cao Mỹ Linh về chuyện làm việc ở Pháp.)</span>" +
+       "<span class='zh-back'>法國語言中心主任跟高美玲介紹中心的情形。</span><br><span class='pinyin-back'>Fǎguó yǔyán zhōngxīn zhǔrèn gēn Gāo Měilíng jièshào zhōngxīn de qíngxíng.</span><span class='vi-back'>(Chủ nhiệm trung tâm ngôn ngữ Pháp giới thiệu tình hình của trung tâm với Cao Mỹ Linh.)</span>" +
+       "</div>"
+  },
+  {
+    f: "<div class='zh-front'>CÁC NGHĨA CỦA GIỚI TỪ</div>" +
+       "<div class='zh-front'>給</div>" +
+       "<div class='pinyin'>gěi</div>" +
+       "<div class='desc-front'>" +
+       "Chữ 給 thường mang hai nghĩa chính: \"cho\" và \"vì/giúp\".<br><br>" +
+       "Khi phủ định, ta đặt 不/沒 trước chữ 給.<br><br>" +
+       "Trong khẩu ngữ (đặc biệt ở Đài Loan), khi 給 mang nghĩa \"cho\", nó có thể được đặt ở phía sau động từ chính. Và khi mang nghĩa \"vì/giúp\", nó có thể thay thế bằng chữ 幫 (bāng) hoặc 替 (tì)." +
+       "</div>",
+    b: "<div class='desc' style='line-height:1.4;'>" +
+       "<span class='zh-back'>他給我們建議了台東很多好玩的地方。</span><br><span class='pinyin-back'>Tā gěi wǒmen jiànyì le Táidōng hěn duō hǎowán de dìfang.</span><span class='vi-back'>(Anh ấy giới thiệu cho chúng tôi rất nhiều nơi vui chơi ở Đài Đông.)</span>" +
+       "<span class='zh-back'>他建議了台東很多好玩的地方給我們。</span><br><span class='pinyin-back'>Tā jiànyì le Táidōng hěn duō hǎowán de dìfang gěi wǒmen.</span><span class='vi-back'>(Anh ấy giới thiệu cho chúng tôi rất nhiều nơi vui chơi ở Đài Đông.)</span>" +
+       "<span class='zh-back'>馬安同昨天給房東打過電話。</span><br><span class='pinyin-back'>Mǎ Āntóng zuótiān gěi fángdōng dǎ guò diànhuà.</span><span class='vi-back'>(Mã An Đồng hôm qua đã gọi điện cho chủ nhà.)</span>" +
+       "<span class='zh-back'>馬安同昨天打過電話給房東。</span><br><span class='pinyin-back'>Mǎ Āntóng zuótiān dǎ guò diànhuà gěi fángdōng.</span><span class='vi-back'>(Mã An Đồng hôm qua đã gọi điện cho chủ nhà.)</span>" +
+       "<span class='zh-back'>李明華給他介紹了很多台灣朋友。</span><br><span class='pinyin-back'>Lǐ Mínghuá gěi tā jièshào le hěn duō Táiwān péngyǒu.</span><span class='vi-back'>(Lý Minh Hoa đã giới thiệu rất nhiều người bạn Đài Loan cho anh ấy.)</span>" +
+       "<span class='zh-back'>李明華介紹了很多台灣朋友給他。</span><br><span class='pinyin-back'>Lǐ Mínghuá jièshào le hěn duō Táiwān péngyǒu gěi tā.</span><span class='vi-back'>(Lý Minh Hoa đã giới thiệu rất nhiều người bạn Đài Loan cho anh ấy.)</span>" +
+       "<span class='zh-back'>我想明天給你過生日。</span><br><span class='pinyin-back'>Wǒ xiǎng míngtiān gěi nǐ guò shēngrì.</span><span class='vi-back'>(Tớ muốn tổ chức sinh nhật cho cậu vào ngày mai.)</span>" +
+       "<span class='zh-back'>李明華給大家照相。</span><br><span class='pinyin-back'>Lǐ Mínghuá gěi dàjiā zhàoxiàng.</span><span class='vi-back'>(Lý Minh Hoa chụp ảnh cho mọi người.)</span>" +
+       "<span class='zh-back'>馬安同給同學們準備了西班牙咖啡。</span><br><span class='pinyin-back'>Mǎ Āntóng gěi tóngxuémen zhǔnbèi le Xībānyá kāfēi.</span><span class='vi-back'>(Mã An Đồng đã chuẩn bị cà phê Tây Ban Nha cho các bạn học.)</span>" +
+       "<span class='zh-back'>我沒打電話給他。</span><br><span class='pinyin-back'>Wǒ méi dǎ diànhuà gěi tā.</span><span class='vi-back'>(Tớ đã không gọi điện cho anh ấy.)</span>" +
+       "<span class='zh-back'>因為她的男朋友不高興，所以不給她打電話了。</span><br><span class='pinyin-back'>Yīnwèi tā de nánpéngyǒu bù gāoxìng, suǒyǐ bù gěi tā dǎ diànhuà le.</span><span class='vi-back'>(Bởi vì bạn trai cô ấy không vui, nên đã không gọi điện cho cô ấy nữa.)</span>" +
+       "<span class='zh-back'>媽媽感冒了，所以沒給我們準備早餐。</span><br><span class='pinyin-back'>Māma gǎnmào le, suǒyǐ méi gěi wǒmen zhǔnbèi zǎocān.</span><span class='vi-back'>(Mẹ bị cảm rồi, nên đã không chuẩn bị bữa sáng cho chúng tôi.)</span>" +
+       "<span class='zh-back'>你是不是給他買了吃的東西？</span><br><span class='pinyin-back'>Nǐ shì bú shì gěi tā mǎi le chī de dōngxi?</span><span class='vi-back'>(Cậu có phải đã mua đồ ăn cho anh ấy không?)</span>" +
+       "<span class='zh-back'>來台灣以後，你給媽媽打過電話沒有？</span><br><span class='pinyin-back'>Lái Táiwān yǐhòu, nǐ gěi māma dǎ guò diànhuà méiyǒu?</span><span class='vi-back'>(Sau khi đến Đài Loan, cậu đã gọi điện cho mẹ chưa?)</span>" +
+       "<span class='zh-back'>你可不可以給我介紹一個打工的機會？</span><br><span class='pinyin-back'>Nǐ kě bù kěyǐ gěi wǒ jièshào yí gè dǎgōng de jīhuì?</span><span class='vi-back'>(Cậu có thể giới thiệu cho tớ một cơ hội làm thêm không?)</span>" +
+       "<span class='zh-back'>李明華介紹女朋友給田中誠一。</span><br><span class='pinyin-back'>Lǐ Mínghuá jièshào nǚpéngyǒu gěi Tiánzhōng Chéngyī.</span><span class='vi-back'>(Lý Minh Hoa giới thiệu bạn gái cho Điền Trung Thành Nhất.)</span>" +
+       "<span class='zh-back'>陳月美買了一大杯咖啡給田中誠一。</span><br><span class='pinyin-back'>Chén Yuèměi mǎi le yí dà bēi kāfēi gěi Tiánzhōng Chéngyī.</span><span class='vi-back'>(Trần Nguyệt Mỹ mua một ly cà phê lớn cho Điền Trung Thành Nhất.)</span>" +
+       "<span class='zh-back'>好朋友過生日，我買蛋糕給他。</span><br><span class='pinyin-back'>Hǎo péngyǒu guò shēngrì, wǒ mǎi dàngāo gěi tā.</span><span class='vi-back'>(Bạn thân đón sinh nhật, tớ mua bánh kem cho cậu ấy.)</span>" +
+       "<span class='zh-back'>田中誠一的老闆早上六點打了一個電話給他。</span><br><span class='pinyin-back'>Tiánzhōng Chéngyī de lǎobǎn zǎoshang liù diǎn dǎ le yí gè diànhuà gěi tā.</span><span class='vi-back'>(Ông chủ của Điền Trung Thành Nhất đã gọi một cuộc điện thoại cho cậu ấy lúc sáu giờ sáng.)</span>" +
+       "<span class='zh-back'>王開文說明那個英文字給田中誠一。</span><br><span class='pinyin-back'>Wáng Kāiwén shuōmíng nà gè Yīngwén zì gěi Tiánzhōng Chéngyī.</span><span class='vi-back'>(Vương Khai Văn giải thích chữ tiếng Anh đó cho Điền Trung Thành Nhất.)</span>" +
+       "<span class='zh-back'>白如玉帶了一些感冒藥給田中誠一。</span><br><span class='pinyin-back'>Bái Rúyù dài le yìxiē gǎnmàoyào gěi Tiánzhōng Chéngyī.</span><span class='vi-back'>(Bạch Như Ngọc mang theo một ít thuốc cảm cho Điền Trung Thành Nhất.)</span>" +
+       "</div>"
+  },
+  {
+    f: "<div class='zh-front'>CÁC NGHĨA CỦA GIỚI TỪ</div>" +
+       "<div class='zh-front'>對</div>" +
+       "<div class='pinyin'>duì</div>" +
+       "<div class='desc-front'>" +
+       "對, mang nghĩa \"với, đối với\", có thể đi kèm với động từ chỉ hành động hoặc động từ chỉ trạng thái, thái độ.<br><br>" +
+       "Phủ định đặt trước 對." +
+       "</div>",
+    b: "<div class='desc' style='line-height:1.4;'>" +
+       "<span class='zh-back'>陳主任對馬安同說明了辦公室的工作環境。</span><br><span class='pinyin-back'>Chén zhǔrèn duì Mǎ Āntóng shuōmíng le bàngōngshì de gōngzuò huánjìng.</span><span class='vi-back'>(Chủ nhiệm Trần đã giải thích với Mã An Đồng về môi trường làm việc của văn phòng.)</span>" +
+       "<span class='zh-back'>李明華對王開文說：「對不起，我不知道你是美國人。」</span><br><span class='pinyin-back'>Lǐ Mínghuá duì Wáng Kāiwén shuō: \"Duìbuqǐ, wǒ bù zhīdào nǐ shì Měiguórén.\"</span><span class='vi-back'>(Lý Minh Hoa nói với Vương Khai Văn: \"Xin lỗi, tôi không biết cậu là người Mỹ.\")</span>" +
+       "<span class='zh-back'>他一看見我，就對我笑。</span><br><span class='pinyin-back'>Tā yí kànjiàn wǒ, jiù duì wǒ xiào.</span><span class='vi-back'>(Anh ấy vừa nhìn thấy tôi, liền cười với tôi.)</span>" +
+       "<br><b>Đi với động từ trạng thái (thể hiện thái độ, sự hiểu biết):</b><br>" +
+       "<span class='zh-back'>他對台北的交通情形很了解。</span><br><span class='pinyin-back'>Tā duì Táiběi de jiāotōng qíngxíng hěn liǎojiě.</span><span class='vi-back'>(Anh ấy rất hiểu rõ tình hình giao thông ở Đài Bắc.)</span>" +
+       "<span class='zh-back'>王主任對老師很客氣。</span><br><span class='pinyin-back'>Wáng zhǔrèn duì lǎoshī hěn kèqi.</span><span class='vi-back'>(Chủ nhiệm Vương đối với giáo viên rất khách sáo.)</span>" +
+       "<span class='zh-back'>張先生對這個事很關心。</span><br><span class='pinyin-back'>Zhāng xiānshēng duì zhè gè shì hěn guānxīn.</span><span class='vi-back'>(Ông Trương rất quan tâm đến việc này.)</span>" +
+       "<span class='zh-back'>你別對他說我找工作的事。</span><br><span class='pinyin-back'>Nǐ bié duì tā shuō wǒ zhǎo gōngzuò de shì.</span><span class='vi-back'>(Cậu đừng nói với anh ấy chuyện tớ tìm việc nhé.)</span>" +
+       "<span class='zh-back'>馬安同沒對陳月美說「對不起」。</span><br><span class='pinyin-back'>Mǎ Āntóng méi duì Chén Yuèměi shuō \"duìbuqǐ\".</span><span class='vi-back'>(Mã An Đồng đã không nói \"xin lỗi\" với Trần Nguyệt Mỹ.)</span>" +
+       "<span class='zh-back'>黃主任沒對我說明鐘點費的事。</span><br><span class='pinyin-back'>Huáng zhǔrèn méi duì wǒ shuōmíng zhōngdiǎnfèi de shì.</span><span class='vi-back'>(Chủ nhiệm Hoàng đã không giải thích với tôi về chuyện tiền công theo giờ.)</span>" +
+       "<span class='zh-back'>醫生對你說了什麼？</span><br><span class='pinyin-back'>Yīshēng duì nǐ shuō le shénme?</span><span class='vi-back'>(Bác sĩ đã nói gì với cậu?)</span>" +
+       "<span class='zh-back'>妳是不是對白如玉說了妳要去看電腦展？</span><br><span class='pinyin-back'>Nǐ shì bú shì duì Bái Rúyù shuō le nǐ yào qù kàn diànnǎozhǎn?</span><span class='vi-back'>(Cậu có phải đã nói với Bạch Như Ngọc là cậu muốn đi xem triển lãm máy tính không?)</span>" +
+       "<span class='zh-back'>你的房東對你好不好？</span><br><span class='pinyin-back'>Nǐ de fángdōng duì nǐ hǎo bù hǎo?</span><span class='vi-back'>(Chủ nhà của cậu đối xử với cậu có tốt không?)</span>" +
+       "<span class='zh-back'>醫生對白如玉說別吃冰的、油的東西。</span><br><span class='pinyin-back'>Yīshēng duì Bái Rúyù shuō bié chī bīng de, yóu de dōngxi.</span><span class='vi-back'>(Bác sĩ nói với Bạch Như Ngọc là đừng ăn đồ lạnh, đồ nhiều dầu mỡ.)</span>" +
+       "<span class='zh-back'>一個馬安同不認識的人對馬安同笑。</span><br><span class='pinyin-back'>Yí gè Mǎ Āntóng bù rènshi de rén duì Mǎ Āntóng xiào.</span><span class='vi-back'>(Một người mà Mã An Đồng không quen cười với Mã An Đồng.)</span>" +
+       "<span class='zh-back'>馬安同對好朋友說「生日快樂！」</span><br><span class='pinyin-back'>Mǎ Āntóng duì hǎo péngyǒu shuō \"shēngrì kuàilè!\"</span><span class='vi-back'>(Mã An Đồng nói với bạn thân \"Chúc mừng sinh nhật!\")</span>" +
+       "<span class='zh-back'>語言中心主任對高美玲說明月底才發薪水。</span><br><span class='pinyin-back'>Yǔyán zhōngxīn zhǔrèn duì Gāo Měilíng shuōmíng yuèdǐ cái fā xīnshuǐ.</span><span class='vi-back'>(Chủ nhiệm trung tâm ngôn ngữ giải thích với Cao Mỹ Linh là cuối tháng mới phát lương.)</span>" +
+       "</div>"
+  }
+];
+
+let idx = 0;
+
+function render() {
+  document.getElementById('frontFace').innerHTML = cards[idx].f;
+  document.getElementById('backFace').innerHTML = cards[idx].b;
+  document.getElementById('progress').innerText = `Thẻ ${idx + 1} / ${cards.length}`;
+}
+
+function flipCard() {
+  document.getElementById('card').classList.toggle('flipped');
+}
+
+function nextCard() {
+  idx = (idx + 1) % cards.length;
+  document.getElementById('card').classList.remove('flipped');
+  render();
+}
+
+function prevCard() {
+  idx = (idx - 1 + cards.length) % cards.length;
+  document.getElementById('card').classList.remove('flipped');
+  render();
+}
+
+document.addEventListener('keydown', function(event) {
+  if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+    nextCard();
+    event.preventDefault();
+  } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+    prevCard();
+    event.preventDefault();
+  } else if (event.key === ' ' || event.key === 'Enter') {
+    flipCard();
+    event.preventDefault();
+  }
+});
+
+render();
+</script>
+</body>
+</html>

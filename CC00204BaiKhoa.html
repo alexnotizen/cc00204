@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BÀI 4 - BÀI KHÓA</title>
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0; min-height:100vh; font-family:Arial,"Microsoft YaHei",sans-serif;
+  background:linear-gradient(135deg,#eef4ff,#f9fbff);
+  display:flex; justify-content:center; color:#202124;
+}
+.app{width:min(900px,96vw); padding:20px 0 30px}
+h1{text-align:center;margin:0 0 6px;font-size:32px}
+.subtitle{text-align:center;color:#666;margin-bottom:14px;font-size:18px}
+.progress{text-align:center;font-size:18px;color:#666;margin-bottom:12px}
+.card-wrap{perspective:1200px; cursor:pointer}
+.card{
+  width:100%; height:750px; position:relative; transform-style:preserve-3d;
+  transition:transform .55s ease;
+}
+.card.flipped{transform:rotateY(180deg)}
+.face{
+  position:absolute; inset:0; backface-visibility:hidden; -webkit-backface-visibility:hidden;
+  border-radius:24px; background:white; box-shadow:0 12px 35px rgba(30,60,100,.15);
+  display:flex; flex-direction:column; justify-content:space-between;
+  padding:32px 36px; border:1px solid #e6eaf0; overflow:hidden;
+}
+.back{transform:rotateY(180deg)}
+
+.card-content {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.context-title {
+  font-weight: bold;
+  margin-bottom: 20px;
+  font-size: 22px;
+  color: #2c3e50;
+  line-height: 1.5;
+  border-bottom: 2px solid #edf2f7;
+  padding-bottom: 12px;
+}
+.dialogue-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.dialogue-table td {
+  vertical-align: top;
+  padding: 10px 0;
+}
+.speaker-col {
+  width: 140px;
+  color: #000000;
+  font-weight: bold;
+  font-size: 24px;
+  white-space: nowrap;
+}
+.speaker-col-front {
+  width: 140px;
+  color: #718096;
+  font-weight: bold;
+  font-size: 40.5px;
+  white-space: nowrap;
+}
+.speech-col {
+  color: #e53e3e;
+  font-weight: bold;
+  font-size: 40.5px;
+  line-height: 1.5;
+}
+.speech-col-back {
+  color: #e53e3e;
+  font-weight: bold;
+  font-size: 27px;
+  line-height: 1.5;
+}
+.pinyin-block {
+  color: #718096;
+  font-weight: bold;
+  font-size: 22px;
+  margin-top: 4px;
+  margin-bottom: 4px;
+  display: block;
+}
+.meaning-text {
+  font-size: 21px;
+  color: #4b5563;
+  font-weight: normal;
+  margin-top: 4px;
+}
+
+.audio-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 22px;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+  vertical-align: middle;
+}
+.audio-btn:hover {
+  background-color: #edf2f7;
+}
+
+.controls{display:flex;gap:16px;justify-content:center;margin-top:22px}
+button{
+  border:0;border-radius:14px;padding:16px 26px;font-size:20px;
+  cursor:pointer;background:#e9eef7;color:#233044;
+}
+button.primary{background:#2563eb;color:white}
+button:hover{filter:brightness(.97)}
+.extra{display:flex;justify-content:center;gap:10px;margin-top:14px}
+.shuffle{background:#e9f8ef}
+
+@media(max-width:600px){
+ .app{padding-top:16px}.card{height:780px}
+ .face{padding:22px 20px}
+ .context-title{font-size:18px; margin-bottom:14px}
+ .speaker-col{width:100px; font-size:18px}
+ .speaker-col-front{width:100px; font-size:30px}
+ .speech-col{font-size:30px}
+ .speech-col-back{font-size:20px}
+ .pinyin-block{font-size:17px;}
+ .meaning-text{font-size:16px}
+ .controls button{padding:12px 16px; font-size:16px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>🇨🇳 BÀI 4 - BÀI KHÓA</h1>
+
+  <div class="progress" id="progress"></div>
+
+  <div class="card-wrap" id="cardWrap" onclick="flipCard()">
+    <div class="card" id="card">
+      <div class="face front">
+        <div class="card-content" id="frontContent"></div>
+      </div>
+      <div class="face back">
+        <div class="card-content" id="backContent"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button onclick="event.stopPropagation();prevCard()">← Trước</button>
+    <button class="primary" onclick="event.stopPropagation();flipCard()">Lật thẻ</button>
+    <button onclick="event.stopPropagation();nextCard()">Tiếp →</button>
+  </div>
+  <div class="extra">
+    <button class="shuffle" onclick="event.stopPropagation();shuffleCards()">🔀 Trộn thẻ</button>
+  </div>
+</div>
+
+<script>
+const originalCards = [
+  {
+    "frontContext": "BÀI KHÓA 1: Buổi phỏng vấn xin việc tại trung tâm ngôn ngữ",
+    "frontLines": [
+      { "speaker": "主任:", "speech": "請坐，你是高美玲嗎？" },
+      { "speaker": "美玲:", "speech": "是。您好。" },
+      { "speaker": "主任:", "speech": "請你先介紹一下自己。" },
+      { "speaker": "美玲:", "speech": "我叫高美玲，是法國人，今年二十八歲，現在在師大學中文。我念大學的時候上過亞洲文化和語言學。" },
+      { "speaker": "主任:", "speech": "妳有沒有教法文的經驗？請妳談一談。" },
+      { "speaker": "美玲:", "speech": "有。我當過語言助教，那時候的學生都是外國人。" },
+      { "speaker": "主任:", "speech": "妳一個星期能來幾天？" },
+      { "speaker": "美玲:", "speech": "我現在上午學中文，下午兩點以後都可以，蛋白質但是我希望一個禮拜教三天就好了。" },
+      { "speaker": "主任:", "speech": "妳除了法文、中文，還會什麼語言？" },
+      { "speaker": "美玲:", "speech": "我還會說西班牙語和英文。" },
+      { "speaker": "主任:", "speech": "妳教過西班牙語嗎？" },
+      { "speaker": "美玲:", "speech": "我大學三年級的暑假，當過西班牙語老師。" },
+      { "speaker": "主任:", "speech": "妳的工作經驗聽起來很不錯。" },
+      { "speaker": "美玲:", "speech": "謝謝您。對了，我想請教一下，貴中心老師的薪水怎麼算？" },
+      { "speaker": "主任:", "speech": "我們是按照大學教授的鐘點費算的。薪水跟大學老師的一樣。" },
+      { "speaker": "美玲:", "speech": "我很想試試這份工作。" },
+      { "speaker": "主任:", "speech": "歡迎妳，妳下個月一號就可以來嗎？" },
+      { "speaker": "美玲:", "speech": "可以的。謝謝。" }
+    ],
+    "backLines": [
+      { "speaker": "主任:", "speech": "請坐，你是高美玲嗎？", "pinyin": "Qǐng zuò, nǐ shì Gāo Měilíng ma?", "meaning": "Mời ngồi, cô là Cao Mỹ Linh phải không?" },
+      { "speaker": "美玲:", "speech": "是。您好。", "pinyin": "Shì. Nín hǎo.", "meaning": "Vâng. Chào ông." },
+      { "speaker": "主任:", "speech": "請你先介紹一下自己。", "pinyin": "Qǐng nǐ xiān jièshào yíxià zìjǐ.", "meaning": "Cô hãy giới thiệu một chút về bản thân mình trước." },
+      { "speaker": "美玲:", "speech": "我叫高美玲，是法國人，今年二十八歲，現在在師大學中文。我念大學的時候上過亞洲文化和語言學。", "pinyin": "Wǒ jiào Gāo Měilíng, shì Fǎguórén, jīnnián èrshíbā suì, xiànzài zài Shīdà xué Zhōngwén. Wǒ niàn dàxué de shíhòu shàngguo Yàzhōu wénhuà hé yǔyánxué.", "meaning": "Tôi tên là Cao Mỹ Linh, là người Pháp, năm nay 28 tuổi, hiện đang học tiếng Trung tại Đại học Sư phạm. Khi học đại học tôi đã học văn hóa châu Á và ngôn ngữ học." },
+      { "speaker": "主任:", "speech": "妳有沒有教法文的經驗？請妳談一談。", "pinyin": "Nǐ yǒu méiyǒu jiāo Fǎwén de jīngyàn? Qǐng nǐ tán yì tán.", "meaning": "Cô đã có kinh nghiệm dạy tiếng Pháp chưa? Cô hãy nói thử xem." },
+      { "speaker": "美玲:", "speech": "有。我當過語言助教，那時候的學生都是外國人。", "pinyin": "Yǒu. Wǒ dāngguo yǔyán zhùjiào, nà shíhòu de xuésheng dōu shì wàiguórén.", "meaning": "Có. Tôi từng làm trợ giảng ngôn ngữ, học sinh lúc đó đều là người nước ngoài." },
+      { "speaker": "主任:", "speech": "妳一個星期能來幾天？", "pinyin": "Nǐ yí ge xīngqī néng lái jǐ tiān?", "meaning": "Một tuần cô có thể đến mấy ngày?" },
+      { "speaker": "美玲:", "speech": "我現在上午學中文，下午兩點以後都可以，蛋白質但是我希望一個禮拜教三天就好了。", "pinyin": "Wǒ xiànzài shàngwǔ xué Zhōngwén, xiàwǔ liǎng diǎn yǐhòu dōu kěyǐ, dànshì wǒ xīwàng yí ge lǐbài jiāo sān tiān jiù hǎole.", "meaning": "Hiện tại buổi sáng tôi học tiếng Trung, buổi chiều sau 2 giờ đều được, nhưng tôi hy vọng một tuần dạy ba ngày là được rồi." },
+      { "speaker": "主任:", "speech": "妳除了法文、中文，還會什麼語言？", "pinyin": "Nǐ chúle Fǎwén, Zhōngwén, hái huì shénme yǔyán?", "meaning": "Ngoài tiếng Pháp, tiếng Trung, cô còn biết ngôn ngữ nào khác không?" },
+      { "speaker": "美玲:", "speech": "我還會說西班牙語和英文。", "pinyin": "Wǒ hái huì shuō Xībānyá yǔ hé Yīngwén.", "meaning": "Tôi còn biết nói tiếng Tây Ban Nha và tiếng Anh." },
+      { "speaker": "主任:", "speech": "妳教過西班牙語嗎？", "pinyin": "Nǐ jiāoguo Xībānyá yǔ ma?", "meaning": "Cô đã từng dạy tiếng Tây Ban Nha chưa?" },
+      { "speaker": "美玲:", "speech": "我大學三年級的暑假，當過西班牙語老師。", "pinyin": "Wǒ dàxué sān niánjí de shǔjià, dāngguo Xībānyá yǔ lǎoshī.", "meaning": "Vào kỳ nghỉ hè năm thứ ba đại học, tôi từng làm giáo viên tiếng Tây Ban Nha." },
+      { "speaker": "主任:", "speech": "妳的工作經驗聽起來很不錯。", "pinyin": "Nǐ de gōngzuò jīngyàn tīng qǐlái hěn búcuò.", "meaning": "Kinh nghiệm làm việc của cô nghe có vẻ rất tốt." },
+      { "speaker": "美玲:", "speech": "謝謝您。對了，我想請教一下，貴中心老師的薪水怎麼算？", "pinyin": "Xièxie nín. Duìle, wǒ xiǎng qǐngjiào yíxià, guì zhōngxīn lǎoshī de xīnshuǐ zěnme suàn?", "meaning": "Cảm ơn ông. Đúng rồi, tôi muốn hỏi một chút, lương của giáo viên ở quý trung tâm được tính thế nào?" },
+      { "speaker": "主任:", "speech": "我們是按照大學教授的鐘點費算的。薪水跟大學老師的一樣。", "pinyin": "Wǒmen shì ànzhào dàxué jiàoshòu de zhōngdiǎnfèi suàn de. Xīnshuǐ gēn dàxué lǎoshī de yíyàng.", "meaning": "Chúng tôi tính theo tiền dạy theo giờ của giáo sư đại học. Lương giống như giáo viên đại học." },
+      { "speaker": "美玲:", "speech": "我很想試試這份工作。", "pinyin": "Wǒ hěn xiǎng shìshi zhè fèn gōngzuò.", "meaning": "Tôi rất muốn thử công việc này." },
+      { "speaker": "主任:", "speech": "歡迎妳，妳下個月一號就可以來嗎？", "pinyin": "Huānyíng nǐ, nǐ xià ge yuè yī hào jiù kěyǐ lái ma?", "meaning": "Chào mừng cô, cô có thể đến vào ngày mùng 1 tháng sau không?" },
+      { "speaker": "美玲:", "speech": "可以的。謝謝。", "pinyin": "Kěyǐ de. Xièxie.", "meaning": "Được ạ. Cảm ơn ông." }
+    ]
+  },
+  {
+    "frontContext": "BÀI KHÓA 2: Câu chuyện về việc xin việc của Cao Mỹ Linh",
+    "frontLines": [
+      { "speaker": "旁白:", "speech": "高美玲來了一年了，按照台灣的法律，她已經可以打工了，所以她的台灣朋友給她介紹了一個在大學語言中心教法文的工作。" },
+      { "speaker": "旁白:", "speech": "雖然高美玲覺得自己的經驗還不夠，可是決定去試一試。" },
+      { "speaker": "旁白:", "speech": "所以她帶著履歷表到語言中心去跟主任面談。" },
+      { "speaker": "旁白:", "speech": "這位主任姓黃，是法國華僑，在台灣住了十幾年，他也在大學工作了十年了。" },
+      { "speaker": "旁白:", "speech": "高美玲在辦公室跟他談話的時候，他先問高美玲在法國的工作經驗，再問她在台灣學中文跟生活的情形。" },
+      { "speaker": "旁白:", "speech": "黃主任覺得高美玲的經驗很適合這份工作。" },
+      { "speaker": "旁白:", "speech": "黃主任也給高美玲介紹了上課的書，還跟她說明了工作環境。" },
+      { "speaker": "旁白:", "speech": "然後，黃主任告訴高美玲，薪水按照工作的時間算，每個月的月底發薪水。" },
+      { "speaker": "旁白:", "speech": "高美玲覺得這份工作聽起來很不錯，所以馬上就答應了。" },
+      { "speaker": "旁白:", "speech": "黃主任對她說，下個月一號就開始上班。" },
+      { "speaker": "旁白:", "speech": "高美玲沒想到這次的面談這麼順利。" }
+    ],
+    "backLines": [
+      { "speaker": "旁白:", "speech": "高美玲來了一年了，按照台灣的法律，她已經可以打工了，所以她的台灣朋友給她介紹了一個在大學語言中心教法文的工作。", "pinyin": "Gāo Měilíng lái le yì nián le, ànzhào Táiwān de fǎlǜ, tā yǐjīng kěyǐ dǎgōng le, suǒyǐ tā de Táiwān péngyou gěi tā jièshàole yí ge zài dàxué yǔyán zhōngxīn jiāo Fǎwén de gōngzuò.", "meaning": "Cao Mỹ Linh đã đến đây được một năm, theo pháp luật Đài Loan, cô ấy đã có thể đi làm thêm, vì vậy người bạn Đài Loan của cô ấy đã giới thiệu cho cô ấy một công việc dạy tiếng Pháp tại trung tâm ngôn ngữ của trường đại học." },
+      { "speaker": "旁白:", "speech": "雖然高美玲覺得自己的經驗還不夠，可是決定去試一試。", "pinyin": "Suīrán Gāo Měilíng juéde zìjǐ de jīngyàn hái bú gòu, kěshì juédìng qù shì yí shì.", "meaning": "Mặc dù Cao Mỹ Linh cảm thấy kinh nghiệm của mình vẫn chưa đủ, nhưng cô ấy quyết định đi thử một lần." },
+      { "speaker": "旁白:", "speech": "所以她帶著履歷表到語言中心去跟主任面談。", "pinyin": "Suǒyǐ tā dàizhe lǚlìbiǎo dào yǔyán zhōngxīn qù gēn zhǔrèn miàntán.", "meaning": "Vì vậy cô ấy mang theo sơ yếu lý lịch đến trung tâm ngôn ngữ để phỏng vấn với giám đốc." },
+      { "speaker": "旁白:", "speech": "這位主任姓黃，是法國華僑，在台灣住了十幾年，他也在大學工作了十年了。", "pinyin": "Zhè wèi zhǔrèn xìng Huáng, shì Fǎguó Huáqiáo, zài Táiwān zhùle shí jǐ nián, tā yě zài dàxué gōngzuòle shí nián le.", "meaning": "Vị giám đốc này họ Hoàng, là người Hoa ở Pháp, đã sống ở Đài Loan hơn mười năm, ông ấy cũng đã làm việc tại trường đại học mười năm rồi." },
+      { "speaker": "旁白:", "speech": "高美玲在辦公室跟他談話的時候，他先問高美玲在法國的工作經驗，再問她在台灣學中文跟生活的情形。", "pinyin": "Gāo Měilíng zài bàngōngshì gēn tā tánhuà de shíhòu, tā xiān wèn Gāo Měilíng zài Fǎguó de gōngzuò jīngyàn, zài wèn tā zài Táiwān xué Zhōngwén gēn shēnghuó de qíngxíng.", "meaning": "Khi Cao Mỹ Linh nói chuyện với ông ấy trong văn phòng, ông ấy hỏi trước về kinh nghiệm làm việc của Cao Mỹ Linh ở Pháp, sau đó hỏi về tình hình học tiếng Trung và cuộc sống của cô ấy ở Đài Loan." },
+      { "speaker": "旁白:", "speech": "黃主任覺得高美玲的經驗很適合這份工作。", "pinyin": "Huáng zhǔrèn juéde Gāo Měilíng de jīngyàn hěn shìhé zhè fèn gōngzuò.", "meaning": "Giám đốc Hoàng cảm thấy kinh nghiệm của Cao Mỹ Linh rất phù hợp với công việc này." },
+      { "speaker": "旁白:", "speech": "黃主任也給高美玲介紹了上課的書，還跟她說明了工作環境。", "pinyin": "Huáng zhǔrèn yě gěi Gāo Měilíng jièshàole shàngkè de shū, hái gēn tā shuōmíngle gōngzuò huánjìng.", "meaning": "Giám đốc Hoàng cũng giới thiệu cho Cao Mỹ Linh sách dạy trên lớp, còn giải thích cho cô ấy về môi trường làm việc." },
+      { "speaker": "旁白:", "speech": "然後，黃主任告訴高美玲，薪水按照工作的時間算，每個月的月底發薪水。", "pinyin": "Ránhòu, Huáng zhǔrèn gàosu Gāo Měilíng, xīnshuǐ ànzhào gōngzuò de shíjiān suàn, měi ge yuè de yuèdǐ fā xīnshuǐ.", "meaning": "Sau đó, Giám đốc Hoàng nói với Cao Mỹ Linh, lương được tính theo thời gian làm việc, cuối mỗi tháng sẽ phát lương." },
+      { "speaker": "旁白:", "speech": "高美玲覺得這份工作聽起來很不錯，所以馬上就答應了。", "pinyin": "Gāo Měilíng juéde zhè fèn gōngzuò tīng qǐlái hěn búcuò, suǒyǐ mǎshàng jiù dāyìng le.", "meaning": "Cao Mỹ Linh cảm thấy công việc này nghe rất tốt, nên đã đồng ý ngay lập tức." },
+      { "speaker": "旁白:", "speech": "黃主任對她說，下個月一號就開始上班。", "pinyin": "Huáng zhǔrèn duì tā shuō, xià ge yuè yī hào jiù kāishǐ shàngbān.", "meaning": "Giám đốc Hoàng nói với cô ấy, ngày mùng 1 tháng sau bắt đầu đi làm." },
+      { "speaker": "旁白:", "speech": "高美玲沒想到這次的面談這麼順利。", "pinyin": "Gāo Měilíng méi xiǎngdào zhè cì de miàntán zhème shùnlì.", "meaning": "Cao Mỹ Linh không ngờ buổi phỏng vấn lần này lại suôn sẻ như vậy." }
+    ]
+  }
+];
+
+let cards = [...originalCards];
+let index = 0;
+let flipped = false;
+
+function speakText(event, text) {
+  event.stopPropagation();
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'zh-TW';
+    utterance.rate = 0.9;
+    window.speechSynthesis.speak(utterance);
+  } else {
+    alert('Trình duyệt của bạn không hỗ trợ tính năng phát âm.');
+  }
+}
+
+function render(){
+  const c = cards[index];
+  
+  let frontHtml = `<div class="context-title">${c.frontContext}</div><table class="dialogue-table">`;
+  c.frontLines.forEach(line => {
+    frontHtml += `
+      <tr>
+        <td class="speaker-col-front">${line.speaker}</td>
+        <td class="speech-col">
+          ${line.speech}
+          <button class="audio-btn" onclick="speakText(event, '${line.speech.replace(/'/g, "\\'")}')" title="Nghe phát âm">🔊</button>
+        </td>
+      </tr>`;
+  });
+  frontHtml += `</table>`;
+  document.getElementById('frontContent').innerHTML = frontHtml;
+
+  let backHtml = `<div class="context-title">${c.frontContext}</div><table class="dialogue-table">`;
+  c.backLines.forEach(line => {
+    backHtml += `
+      <tr>
+        <td class="speaker-col">${line.speaker}</td>
+        <td class="speech-col-back">
+          ${line.speech}
+          <button class="audio-btn" onclick="speakText(event, '${line.speech.replace(/'/g, "\\'")}')" title="Nghe phát âm">🔊</button>
+          <div class="pinyin-block">${line.pinyin}</div>
+          <div class="meaning-text">${line.meaning}</div>
+        </td>
+      </tr>`;
+  });
+  backHtml += `</table>`;
+  document.getElementById('backContent').innerHTML = backHtml;
+
+  document.getElementById('progress').textContent = `Thẻ ${index+1} / ${cards.length}`;
+  document.getElementById('card').classList.toggle('flipped', flipped);
+}
+
+function flipCard(){
+  flipped = !flipped;
+  document.getElementById('card').classList.toggle('flipped', flipped);
+}
+
+function nextCard(){
+  index = (index + 1) % cards.length;
+  flipped = false; render();
+}
+
+function prevCard(){
+  index = (index - 1 + cards.length) % cards.length;
+  flipped = false; render();
+}
+
+function shuffleCards(){
+  for(let i=cards.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [cards[i],cards[j]]=[cards[j],cards[i]];
+  }
+  index=0; flipped=false; render();
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight') nextCard();
+  else if(e.key==='ArrowLeft') prevCard();
+  else if(e.key===' ' || e.key==='Enter'){
+    e.preventDefault();
+    flipCard();
+  }
+});
+
+render();
+</script>
+</body>
+</html>
